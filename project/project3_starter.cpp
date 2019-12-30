@@ -4,13 +4,18 @@
 /////////////      class Person      ///////////////
 #include <iostream>
 #include <string.h>
-
+#include <typeinfo>
 using namespace std;
 
 class UniversityMember;
+class Student;
 
+enum Department{Accounting, Business, Engineering, Mathematics, Physics, Arts, Chemistry, dUnknown};
+enum StudentStatus{FullTime, PartTime, Exchange, sUnknown};
+enum Rank {Instructor, GradTeachingAsst, AsstProf, AssocProf, Professor, ResScientist, Dean, rUnknown};
 const short MaxRoles = 6;   //an arbitrary limit
-
+static const string statusLabels[] = {"full-time", "part-time", "exchange", "unknown"};
+static const string departmentNames[] = {"Accounting", "Business", "Engineering", "Mathematics", "Physics", "Arts", "Chemistry", "Unknown"};
 
 class Date {
 public:
@@ -33,117 +38,129 @@ ostream& operator<<( ostream& os, Date dt )
 Date Date::today( 12, 25, 2003 );
 
 
-class Person
-{
-  string name;
-  string address;
-  unsigned long ssn;
-  Date birthdate;
+class Course {
+
+private:
+    string courseName;
+    long   courseId;
 
 public:
+    Course() {}
 
-  Person();
-  // constructor:
-  Person( const string theName, unsigned long theSSN, Date theBirthDate, const string theAddress );
+    Course( const string name, long courseId){
+        this->courseName = name;
+        this->courseId = courseId;
+    }
 
-  // copy constructor:
-  Person( const Person& other);
+    Course( const Course& other) {
+        this->courseName = other.courseName;
+        this->courseId = other.courseId;
+    };
 
-  // copy assignment operator:
-  Person& operator=( const Person& other);
+    Course& operator=( const Course& other );
+    ~Course() {};
 
-  // destructor:
-  ~Person();
+    // comparison operators:
+    bool operator==( const Course& );
+    bool operator!=( const Course& );
 
-  bool adoptNewRole(UniversityMember* newRole);
+    string getCourseName() const {
+        return this->courseName;
+    }
+    void setCourseName( const string );
+    long getCourseId() const;
+    void setCourseId( long );
 
-  UniversityMember* setActiveRole(UniversityMember* thisRole);
-
-  bool isRoleValid(const UniversityMember* thisRole) const;
-
-  UniversityMember* getActiveRole() const;
-
-  unsigned short getRoleCount() const;
-
-  bool deactivateRole(UniversityMember* thisRole);
-
-  void print();
+    friend ostream& operator << ( ostream& os, Course aCourse );
 };
 
-
-Person::Person()
-{
-	//initialize
+ostream &operator<<(ostream &os, Course aCourse) {
+    os << aCourse.courseName << "  "  << aCourse.courseId << endl;
+    return os;
 }
 
-Person::Person( const string theName, unsigned long theSSN, Date theBirthDate, const string theAddress )
+class Person
 {
+private:
+    string name;
+    unsigned long ssn;
+    string address;
+    Date birthdate;
+    UniversityMember* allRoles[MaxRoles];
+    unsigned short roleCount;
+    UniversityMember* activeRole;
+public:
 
+    Person() {
 
-}
+    }
 
-Person::~Person()
-{
-	delete [] allRoles;
-}
+    Person( const string theName, unsigned long theSSN, Date theBirthDate, const string theAddress ) {
+        this->name = theName;
+        this->ssn = theSSN;
+        this->birthdate = theBirthDate;
+        this->address = theAddress;
+        cout << "Person Counstruct" << endl;
 
-bool Person::adoptNewRole(UniversityMember* newRole)
-{
-	for(int i=0; i<MaxRoles; i++)
-	{
-		if(allRoles[i] == 0)
-		{
-			allRoles[i] = newRole;
-			roleCount++;
-			return true;
-		}
-	}
+        this->roleCount = 0;
+        this->activeRole = 0;
+    }
 
-	cout<<"Cannot adopt new role"<<endl;
-	return false;
-}
+    Person( const Person& other) {
+        this->name = other.name;
+        this->ssn = other.ssn;
+        this->birthdate = other.birthdate;
+        this->address = other.address;
+        this->roleCount = other.roleCount;
+        this->activeRole = other.activeRole;
 
-UniversityMember* Person::setActiveRole(UniversityMember* thisRole)
-{
-	if(thisRole != 0)
-	{
-		UniversityMember* oldRole = activeRole;
-		activeRole = thisRole;
-		return oldRole;
-	}
+        cout << "Person Copy Counstruct" << endl;
+    }
 
-	return 0;
-}
+    Person& operator=( const Person& other) {
 
-UniversityMember* Person::getActiveRole() const
-{
-	return activeRole;
-}
+    }
 
+    ~Person() {};
 
-unsigned short Person::getRoleCount() const
-{
-	return roleCount;
-}
+    bool adoptNewRole(UniversityMember* newRole)
+    {
+        for(int i=0; i<MaxRoles; i++)
+        {
+            if(allRoles[i] == 0)
+            {
+                allRoles[i] = newRole;
+                roleCount++;
+                return true;
+            }
+        }
 
-bool Person::deactivateRole(UniversityMember* thisRole)
-{
-	for(int i=0; i<MaxRoles; i++)
-	{
-		if(allRoles[i] == thisRole)
-		{
-			allRoles[i] = 0;
-			roleCount--;
-			return true;
-		}
-	}
-	return false;
-}
+        cout<<"Cannot adopt new role"<<endl;
+        return false;
+    }
 
+    UniversityMember* setActiveRole(UniversityMember* thisRole) {
+        if(thisRole != 0)
+        {
+            UniversityMember* oldRole = activeRole;
+            activeRole = thisRole;
+            return oldRole;
+        }
 
-///////////////    UniversityMember class    //////////////////
+        return 0;
+    }
 
+    UniversityMember* getActiveRole() {
+        return activeRole;
+    }
 
+    void print() {
+        cout<<"Name: " << this->name << endl;
+        cout<<"Address: "<< this->address << endl;
+        cout<<"ID: " << this->ssn << endl;
+        cout<<"Birthdate: "<< this->birthdate << endl;
+    }
+};
 
 class UniversityMember
 {
@@ -153,337 +170,218 @@ class UniversityMember
 
 public:
 
-	UniversityMember();
+	UniversityMember() {};
 
-	UniversityMember(UniversityMember* whichRole, Person* thisPerson);
+	UniversityMember(UniversityMember* whichRole, Person* thisPerson) {
+        this->role = whichRole;
+        this->ownerOfRole = thisPerson;
 
-	UniversityMember(const UniversityMember& other);
+        cout << "UniversityMember Construct" <<endl;
+	}
 
-	UniversityMember& operator=(const UniversityMember& other);
+	UniversityMember(const UniversityMember& other) {
+        this->role = other.role;
+        this->ownerOfRole = other.ownerOfRole;
+
+        cout << "UniversityMember Construct" <<endl;
+	}
+
+	UniversityMember& operator=(const UniversityMember& other) {
+        this->role = other.role;
+        this->ownerOfRole = other.ownerOfRole;
+
+        cout << "UniversityMember Construct" <<endl;
+	};
 
 	virtual ~UniversityMember(){}	//virtual destructor
 
-	bool operator==(const UniversityMember& other);
+	bool operator==(const UniversityMember& other) {
+        cout<<"inside the overload definition of == for UniversityMember"<<endl;
+        return typeid(*this) == typeid(other);
+	};
 
 	Person* roleFor() const
 	{
-		return ownerOfRole;
+		return this->ownerOfRole;
 	}
 
-	Person* changeOwnerTo(Person* newPerson);
-
-	Department getDepartment() const;
-
-	void setDepartment(Department newDept);
-
-	virtual string toString() const{}
+	Department getDepartment() const {
+        return this->department;
+	}
 
 	virtual void print() const {}
 };
 
-
-UniversityMember::UniversityMember()
-{
-
-}
-
-
-UniversityMember::UniversityMember(UniversityMember* whichRole, Person* thisPerson)
-{
-	role = whichRole;
-	ownerOfRole = thisPerson;
-	department = dUnknown;
-}
-
-
-UniversityMember::UniversityMember(const UniversityMember& other)
-{
-	role = other.role;
-	ownerOfRole = other.ownerOfRole;
-	department = other.department;
-}
-
-
-UniversityMember& UniversityMember::operator=(const UniversityMember& other)
-{
-	if(this == &other)
-		return *this;
-
-	role = other.role;
-	ownerOfRole = other.ownerOfRole;
-	department = other.department;
-
-	return *this;
-}
-
-bool UniversityMember::operator==(const UniversityMember& other)
-{
-	cout<<"inside the overload definition of == for UniversityMember"<<endl;
-	return typeid(*this) == typeid(other);
-}
-
-
-Person* UniversityMember::changeOwnerTo(Person* newPerson)
-{
-	ownerOfRole = newPerson;
-	return ownerOfRole;
-}
-
-
-Department UniversityMember::getDepartment() const
-{
-	return department;
-}
-
-void UniversityMember::setDepartment(Department newDept)
-{
-	department = newDept;
-}
-
-
-//////////////////// rest of Person definition ///////////////
-
-
-bool Person::isRoleValid(const UniversityMember* thisRole) const
-{
-	for(int i=0; i<MaxRoles; i++)
-	{
-		if(allRoles[i] != 0 && *allRoles[i] == *thisRole)
-			return true;
-	}
-	return false;
-}
-
-void Person::print()
-{
-	cout<<"Name: "<<name<<endl;
-	cout<<"Address: "<<address<<endl;
-	cout<<"ID: "<<ssn<<endl;
-	cout<<"Birthdate: "<<birthdate;
-	cout<<"The allowed roles for this person are: ";
-
-	for(int i=0; i<MaxRoles; i++)
-		if(allRoles[i] != 0)
-			cout<<allRoles[i]->toString()<<" ";
-
-	cout<<endl;
-}
-
-
-
-
-///////////////// derived class Student //////////////
-
-
 const int MaxCoursesForStudent = 4;
-
-
-class Student : public Person
+class Student : public UniversityMember
 {
-  StudentStatus status;
-  Department department;
-  Course* entolledFor[];
-  int numCourse;
 
+private:
+    StudentStatus status;
+    Department department;
+    Course* entolledFor[MaxCoursesForStudent];
+    int numCourses;
 public:
 
-  Student();
+    Student() : UniversityMember() {}
 
   // constructor:
-  Student( StudentStatus theStatus);
+    Student(StudentStatus theStatus): UniversityMember() {
 
+        this->status = theStatus;
+
+        for(int i=0; i< MaxCoursesForStudent; i++)
+            entolledFor[i] = 0;
+
+        this->numCourses = 0;
+
+        cout << "Student Construct" << endl;
+    };
 
   // copy constructor, assignment operator, destructor:
-  Student( const Student& );
-  Student& operator=( const Student& );
-  ~Student();
+    Student( const Student& other) {
+        this->status = other.status;
+        this->numCourses = other.numCourses;
 
-  void setStatus( StudentStatus aStatus );
-  StudentStatus getStatus() const;
+        for(int i=0; i< MaxCoursesForStudent; i++) {
+            if(other.entolledFor[i] != 0) this->entolledFor[i] = new Course(*(other.entolledFor[i]));
+        }
+    }
+
+    Student& operator=( const Student& other) {
+        if(this == &other) return *this;
+        status = other.status;
+        numCourses = other.numCourses;
+
+        for(int i=0; i< MaxCoursesForStudent; i++)
+        {
+            if(this->entolledFor[i] != 0 && other.entolledFor[i] == 0)
+                delete entolledFor[i];
+            else if(this->entolledFor[i] == 0 && other.entolledFor[i] != 0)
+                this->entolledFor[i] = new Course(*(other.entolledFor[i]));
+            else if(this->entolledFor[i] != 0 && other.entolledFor[i] != 0)
+                *(this->entolledFor[i]) = *(other.entolledFor[i]);
+        }
+
+        return *this;
+    };
+
+    ~Student() {
+    	for(int i=0; i< MaxCoursesForStudent; i++) {
+            if(this->entolledFor[i] != 0)
+                delete entolledFor[i];
+        }
+    };
+
+    void setDepartment(Department newDept) {
+        this->department = newDept;
+	}
+
+    void setStatus( StudentStatus aStatus ) {
+        this->status = aStatus;
+        cout << "set status sucess" << endl;
+    };
+
+    StudentStatus getStatus() const {
+        return this->status;
+    };
 
 
-  bool enrollForCourse(const Course& aCourse);
+    bool enrollForCourse(const Course& aCourse) {
+        if(this->numCourses >= MaxCoursesForStudent)
+            return false; //already enrolled too many courses
 
+        for(int i=0; i< MaxCoursesForStudent; i++)
+        {
+            if(entolledFor[i] == 0)
+            {
+                this->entolledFor[i] = new Course(aCourse);
+                this->numCourses++;
+                return true;
+            }
+        }
+        return false;
+    };
 
-  string toString() const;
-  void print() const;
+    bool dropFromCourse(const Course& theCourse)
+    {
+        for(int i=0; i< MaxCoursesForStudent; i++)
+        {
+            if(this->entolledFor[i] != 0)
+            {
+                if(*this->entolledFor[i] == theCourse)
+                {
+                    delete this->entolledFor[i];	//it was dynamically allocated
+                    this->entolledFor[i] = 0;
+                    numCourses--;
+                    return true;
+                }
+            }
+        }
+        return false;	//student has not registered for this course
+    }
+
+    void listCoursesRegisteredFor() const {
+        for(int i=0; i< MaxCoursesForStudent; i++) {
+            if(this->entolledFor[i] != 0) {
+                cout << *this->entolledFor[i];
+            }
+        }
+        cout<<endl;
+    }
+
+    Department getDepartment() const {
+        return this->department;
+    }
+
+    void print() const {
+        cout<<"*** Informations as a student ***"<<endl;
+        cout<<"Status: "<<statusLabels[(int)status]<<endl;
+        cout<<"Department: "<< departmentNames[getDepartment()] <<endl;
+        cout<<"Number of courses registed: "<< this->numCourses <<endl;
+        listCoursesRegisteredFor();
+    }
 };
-
-
-Student::Student() : UniversityMember()
-{
-
-}
-
-Student::Student( StudentStatus theStatus)
-				  : UniversityMember()
-{
-	status = theStatus;
-
-	for(int i=0; i< MaxCoursesForStudent; i++)
-		enrolled[i] = 0;
-
-	numCourses = 0;
-}
-
-Student::Student( const Student& other) : UniversityMember(other)
-{
-	status = other.status;
-	numCourses = other.numCourses;
-
-	for(int i=0; i< MaxCoursesForStudent; i++)
-		if(other.enrolled[i] != 0)
-			this->enrolled[i] = new Course(*(other.enrolled[i]));
-
-}
-
-Student& Student::operator=( const Student& other)
-{
-	if(this == &other)
-		return *this;
-
-	UniversityMember::operator=(other);	//call the base assignment operator
-
-	status = other.status;
-	numCourses = other.numCourses;
-
-	//copy the courses correctly:
-
-	for(int i=0; i< MaxCoursesForStudent; i++)
-	{
-		if(this->enrolled[i] != 0 && other.enrolled[i] == 0)
-			delete enrolled[i];
-		else if(this->enrolled[i] == 0 && other.enrolled[i] != 0)
-			this->enrolled[i] = new Course(*(other.enrolled[i]));
-		else if(this->enrolled[i] != 0 && other.enrolled[i] != 0)
-			*(this->enrolled[i]) = *(other.enrolled[i]);
-	}
-
-	return *this;
-}
-
-//destructor
-Student::~Student()
-{
-	for(int i=0; i< MaxCoursesForStudent; i++)
-		if(this->enrolled[i] != 0)
-			delete enrolled[i];
-}
-
-void Student::setStatus( StudentStatus aStatus )
-{
-	status = aStatus;
-}
-
-StudentStatus Student::getStatus() const
-{
-	return status;
-}
-
-
-
-bool Student::enrollForCourse(const Course& aCourse)
-{
-	if(numCourses >= MaxCoursesForStudent)
-		return false; //already enrolled too many courses
-
-	for(int i=0; i< MaxCoursesForStudent; i++)
-	{
-		if(enrolled[i] == 0)
-		{
-			enrolled[i] = new Course(aCourse);
-			numCourses++;
-			return true;
-		}
-	}
-	return false;
-}
-
-bool Student::dropFromCourse(const Course& theCourse)
-{
-	for(int i=0; i< MaxCoursesForStudent; i++)
-	{
-		if(enrolled[i] != 0)
-		{
-			if(*enrolled[i] == theCourse)
-			{
-				delete enrolled[i];	//it was dynamically allocated
-				enrolled[i] = 0;
-				numCourses--;
-				return true;
-			}
-		}
-	}
-	return false;	//student has not registered for this course
-}
-
-
-void Student::listCoursesRegisteredFor() const
-{
-	for(int i=0; i< MaxCoursesForStudent; i++)
-		if(enrolled[i] != 0)
-			cout<<*enrolled[i]<<" ";
-	cout<<endl;
-}
-
-string Student::toString() const
-{
-	return string("Student");
-}
-
-void Student::print() const
-{
-	cout<<"*** Informations as a student ***"<<endl;
-	cout<<"Status: "<<statusLabels[(int)status]<<endl;
-	cout<<"Department: "<<departmentNames[getDepartment()]<<endl;
-	cout<<"Number of courses registed: "<<numCourses<<endl;
-	listCoursesRegisteredFor();
-}
-
 
 
 //////////// derived class Teacher /////////////
-
-
 const int MaxCoursesForTeacher = 2;
 const int MaxGraders = 2;
 
-
-class Teacher : public UniversityMember
+class Teacher : public Person
 {
-	//.....
+
+private:
+    Rank rank;
+    double salary;
+    Department department;
+    Course* coursesOffered[MaxCoursesForTeacher];
+    string* graders[MaxGraders];
+
 public:
 	Teacher(){}
-	//.....
+
+    Teacher(const string theName, unsigned long theSSN, Date theBirthDate, const string theAddress) {
+    }
+
+
 };
-
-//.....
-
 
 
 //////////// main /////////////
-
-void main()
+int main()
 {
-	Person per1("Joe Johns", 012345, Date(1, 2, 1900), "Main Street, USA");
+	Person per1("Wei", 123456, Date(12, 10, 1992), "Teipei");
+    Course course("Computer Science", 104400135);
 
-	per1.adoptNewRole(new Student(FullTime) );
-
-	if(per1.isRoleValid( new Teacher() ) )
-		cout<<"The teacher role is valid"<<endl;
-
-	if(per1.isRoleValid( new Student() ) )
-		cout<<"The student role is valid"<<endl;
-
-	per1.setActiveRole(new Student(FullTime) );
-
-	Student* sp = dynamic_cast<Student*>(per1.getActiveRole());
-
-	if(sp != 0)
-		cout<< "The role of the new object is Student"<<endl;
-
-	if(typeid(*(per1.getActiveRole())) == typeid(Student) )
-		cout<< "typeid test: The role of the new object is Student"<<endl;
+    //per1.adoptNewRole(new Student(FullTime));
+    per1.setActiveRole(new Student(FullTime));
+    Student* sp = dynamic_cast<Student*>(per1.getActiveRole());
+    sp->setDepartment(Engineering);
+    sp->enrollForCourse(course);
 
 	per1.print();
+    sp->print();
+
+	return 0;
 }
