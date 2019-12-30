@@ -15,6 +15,7 @@ enum StudentStatus{FullTime, PartTime, Exchange, sUnknown};
 enum Rank {Instructor, GradTeachingAsst, AsstProf, AssocProf, Professor, ResScientist, Dean, rUnknown};
 const short MaxRoles = 6;   //an arbitrary limit
 static const string statusLabels[] = {"full-time", "part-time", "exchange", "unknown"};
+static const string rankNames[] = {"Instructor", "GradTeachingAsst", "AsstProf", "Professor", "ResScientist", "Dean", "rUnknown"};
 static const string departmentNames[] = {"Accounting", "Business", "Engineering", "Mathematics", "Physics", "Arts", "Chemistry", "Unknown"};
 
 class Date {
@@ -347,8 +348,7 @@ public:
 //////////// derived class Teacher /////////////
 const int MaxCoursesForTeacher = 2;
 const int MaxGraders = 2;
-
-class Teacher : public Person
+class Teacher : public UniversityMember
 {
 
 private:
@@ -357,14 +357,132 @@ private:
     Department department;
     Course* coursesOffered[MaxCoursesForTeacher];
     string* graders[MaxGraders];
+    int numCourses;
+    int numGraders;
 
 public:
 	Teacher(){}
 
-    Teacher(const string theName, unsigned long theSSN, Date theBirthDate, const string theAddress) {
+    Teacher(Rank tRank): UniversityMember() {
+
+        this->rank = tRank;
+
+        for(int i=0; i< MaxCoursesForTeacher; i++)
+            this->coursesOffered[i] = 0;
+
+        for(int i=0; i< MaxGraders; i++)
+            this->graders[i] = 0;
+
+        this->numCourses = 0;
+        this->numGraders = 0;
+
+        cout << "Teacher Construct" << endl;
+    };
+
+    Teacher( const Teacher& other) {
+        this->rank = other.rank;
+        this->numCourses = other.numCourses;
+        this->numGraders = other.numGraders;
+
+        for(int i=0; i < MaxCoursesForTeacher; i++) {
+            this->coursesOffered[i] = new Course(*(other.coursesOffered[i]));
+        }
+
+        for(int i=0; i < MaxGraders; i++) {
+            this->graders[i] = other.graders[i];
+        }
     }
 
+    Department getDepartment() const {
+        return this->department;
+	}
 
+    void setRank(Rank tRank) {
+        this->rank = tRank;
+	}
+
+    void setDepartment(Department newDept) {
+        this->department = newDept;
+	}
+
+	void setSalary(double salary) {
+        this->salary = salary;
+	}
+
+	void listCoursesRegisteredFor() const {
+        for(int i=0; i< MaxCoursesForTeacher; i++) {
+            if(this->coursesOffered[i] != 0) {
+                cout << *this->coursesOffered[i];
+            }
+        }
+        cout<<endl;
+    }
+
+    bool enrollForCourse(const Course& aCourse) {
+        if(this->numCourses >= MaxCoursesForStudent)
+            return false; //already enrolled too many courses
+
+        for(int i=0; i< MaxCoursesForTeacher; i++)
+        {
+            if(coursesOffered[i] == 0)
+            {
+                this->coursesOffered[i] = new Course(aCourse);
+                this->numCourses++;
+                return true;
+            }
+        }
+        return false;
+    };
+
+    bool dropFromCourse(const Course& theCourse)
+    {
+        for(int i=0; i< MaxCoursesForTeacher; i++)
+        {
+            if(this->coursesOffered[i] != 0)
+            {
+                if(*this->coursesOffered[i] == theCourse)
+                {
+                    delete this->coursesOffered[i];	//it was dynamically allocated
+                    this->coursesOffered[i] = 0;
+                    numCourses--;
+                    return true;
+                }
+            }
+        }
+        return false;	//student has not registered for this course
+    }
+
+    bool setGraders(string grader) {
+        if(this->numGraders >= MaxGraders)
+            return false; //already enrolled too many courses
+
+        for(int i=0; i<MaxGraders; i++)
+        {
+            if(graders[i] == 0)
+            {
+                this->graders[i] = new string(grader);
+                this->numGraders++;
+                return true;
+            }
+        }
+        return false;
+    }
+
+	void print() {
+        cout<<"*** Informations as a teacher ***"<<endl;
+        cout<<"Rank: "<<rankNames[(int)rank - 1]<<endl;
+        cout<<"Department: "<< departmentNames[getDepartment()] <<endl;
+        cout<<"Salary: "<< this->salary << endl;
+        cout << "Graders: ";
+        cout<<"Number of courses registed: "<< this->numCourses <<endl;
+        for(int i=0; i < this->numGraders; i++) {
+            cout << *this->graders[i] << " ";
+        }
+        cout << endl;
+        listCoursesRegisteredFor();
+        cout<<endl;
+
+	}
 };
 
 
@@ -372,16 +490,28 @@ public:
 int main()
 {
 	Person per1("Wei", 123456, Date(12, 10, 1992), "Teipei");
+	Person per2("Kevin", 321654, Date(12, 10, 1922), "USA");
+
     Course course("Computer Science", 104400135);
 
-    //per1.adoptNewRole(new Student(FullTime));
+    per2.setActiveRole(new Teacher(ResScientist));
     per1.setActiveRole(new Student(FullTime));
+
     Student* sp = dynamic_cast<Student*>(per1.getActiveRole());
+    Teacher* st = dynamic_cast<Teacher*>(per2.getActiveRole());
+
     sp->setDepartment(Engineering);
     sp->enrollForCourse(course);
 
+    st->setDepartment(Engineering);
+    st->enrollForCourse(course);
+    st->setSalary(78000);
+    st->setGraders("10705507");
+
+
 	per1.print();
     sp->print();
+    st->print();
 
 	return 0;
 }
